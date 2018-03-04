@@ -1,9 +1,12 @@
 package anim.vpnanimation;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -119,36 +122,46 @@ public class MainActivity extends AppCompatActivity {
 */
     }
 
+    public static boolean isLowRamDevice(Context context) {
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        return activityManager != null && ActivityManagerCompat.isLowRamDevice(activityManager);
+    }
+
     protected void animationProcessContinued() {
-        GlideApp.with(this)
-                .load(R.drawable.connect_process)
-                .placeholder(R.drawable.first_connect_process)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .skipMemoryCache(false)
-                .listener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        return false;
-                    }
 
-                    @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        Handler handler = new Handler();
-                        int duration = 5000;
+        if(isLowRamDevice(getBaseContext())) {
+            ivGif.setImageDrawable(getResources().getDrawable(R.drawable.first_connect_process));
+        } else {
+            GlideApp.with(this)
+                    .load(R.drawable.connect_process)
+                    .placeholder(R.drawable.first_connect_process)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .skipMemoryCache(false)
+                    .listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            return false;
+                        }
 
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                animationProcessFinished();
-                            }
-                        }, duration);
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                            Handler handler = new Handler();
+                            int duration = 5000;
 
-                        tvOutput.append("\nProcess: " + duration + " ms");
-                        return false;
-                    }
-                })
-                .useAnimationPool(true)
-                .into(ivGif);
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    animationProcessFinished();
+                                }
+                            }, duration);
+
+                            tvOutput.append("\nProcess: " + duration + " ms");
+                            return false;
+                        }
+                    })
+                    .useAnimationPool(true)
+                    .into(ivGif);
+        }
     }
 
 
@@ -267,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    shieldTurnedOn();
+                                    shieldTurnedOff();
                                 }
                             }, TimeUnit.MILLISECONDS.toMillis(870));
                         }
